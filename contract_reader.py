@@ -1,19 +1,18 @@
-pdfpath = r"C:\Users\caio.santos\Desktop\teste"
-docspath = r"C:\Users\caio.santos\Desktop\teste\DOCS"
-
 import docx
 import os
-import xlsxwriter
-import time
+import pandas as pd
 import io
 from PIL import Image
 import pytesseract
 from wand.image import Image as wi
 import fnmatch
+import re
 
+pdfpath = r"C:\Users\caio.santos\Desktop\teste\teste construdecor"
+docspath = r"C:\Users\caio.santos\Desktop\teste\docs"
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caio.santos\AppData\Local\Tesseract-OCR\tesseract.exe"
 
-def Get_text_from_image(pdf_path, out):
+def get_pdf_text(pdf_path, out):
     doc = docx.Document()
     pdf=wi(filename=pdf_path,resolution=300)
     pdfImg=pdf.convert('jpeg')
@@ -26,36 +25,69 @@ def Get_text_from_image(pdf_path, out):
     for imgBlob in imgBlobs:
         im=Image.open(io.BytesIO(imgBlob))
         text=pytesseract.image_to_string(im,lang='por')
-        text.replace("\n", "")
         doc.add_paragraph(text)
 
     doc.save(out +'.docx')
 
-
 def trainprepare(path):
     os.chdir(path)
-    excel = xlsxwriter.Workbook('contract term.xlsx')
-    sh = excel.add_worksheet()
-    row = 0
+
     ndoc = 0
-    for d in os.listdir():
+    docnum = []
+    clausula = []
+    text = []
+    # -QUINTA —
+    rex = re.compile(r"CLÁUSULA")
+    for d in fnmatch.filter(os.listdir(), '*.docx'):
         doc = docx.Document(d)
         ndoc += 1
-        npara = 0
+        cl = 0
+        stringx = []
         for p in doc.paragraphs:
-            npara += 1
-            col = 0
-            row += 1
-            sh.write(row, col, 'Doc: ' + str(ndoc))
-            col += 1
-            sh.write(row, col, 'Para: ' + str(npara))
-            col += 1
-            sh.write(row, col, p.text)
-            col += 1
+            stringx.append(p.text)
 
-    excel.close()
+        for string in re.split(rex, ''.join(stringx)):
+            cl += 1
+            docnum.append(ndoc)
+            clausula.append(cl-1)
+            text.append(string)
+
+    data = {'Doc': docnum, 'clausula': clausula, 'Text': text}
+    df = pd.DataFrame(data=data)
+    return df
+
+def trainprepareDF(dataf):
+    docnum = []
+    clausula = []
+    text = []
+    # PARÁGRAFO 1º
+    # OBJETO:1.1.
+    # LOCAÇÃO:2.1.
+    # PRAZO4.
+    # rex = re.compile(r"PARÁGRAFO\s\d+?º")
+    rex = re.compile(r"(PARÁGRAFO\s\d+?º)|(\w+?:\d+?\.\d+?\.)")
+
+    for i in range(0, 21):
+        ndoc = dataf.iloc[i][0]
+        cl = 0
+        stringx = dataf.iloc[i][2]
+
+        for string in re.split(rex, stringx):
+            cl += 1
+            docnum.append(ndoc)
+            clausula.append(cl - 1)
+            text.append(string)
+
+    data = {'Doc': docnum, 'clausula': clausula, 'Text': text}
+    dff = pd.DataFrame(data=data)
+    return dff
+
+df = trainprepare(docspath)
+
+df.to_excel(docspath + '\\traintest contract.xlsx')
 
 
-print(os.listdir())
+
+
 
 

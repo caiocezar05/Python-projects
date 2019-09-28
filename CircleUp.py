@@ -7,30 +7,75 @@ import numpy as np
 import pytesseract
 from wand.image import Image as wi
 import os
-
-
+docpath = r"C:\Users\caio.santos\Desktop\Lessa CircleUp\OM\(31956244)_(9)_Project Orobo - Offering Memorandum (Sent to WGL - September 24, 2019).DOCX"
+imagedemo = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\ima15.jpg"
+reqpath = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort"
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caio.santos\AppData\Local\Tesseract-OCR\tesseract.exe"
 
-def doc_to_excel(filepath, padrão, excelname):
+
+def extnum_from_DF(df):
+    rex1 = re.compile('R\$\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
+    rex2 = re.compile('\d+?\.?\d?\d?\%')
+    dic = []
+
+    for t in df['Texto']:
+        lis = []
+        if rex1.search(t):
+
+            for num in rex1.findall(t):
+                lis.append(num)
+        if rex2.search(t):
+            for num in rex2.findall(t):
+                lis.append(num)
+
+        dic.append(lis)
+
+    return df.join(pd.DataFrame(dic))
+
+
+def doc_to_excel(filepath, excelname,padrão=None):
     doc = docx.Document(filepath)
     excel = xlsxwriter.Workbook(excelname + '.xlsx')
     sh = excel.add_worksheet()
     row = 0
-    if padrão == 'R$':
-        rex = re.compile('R\$\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
 
-    if padrão == '%':
-        rex = re.compile('\d+?\.?\d?\d?\%')
+    if padrão == None:
+        rex1 = re.compile('R\$\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
+        rex2 = re.compile('\d+?\.?\d?\d?\%')
+        for p in doc.paragraphs:
+            col = 0
 
-    for p in doc.paragraphs:
-        col = 0
-        if rex.search(p.text):
-            row += 1
-            sh.write(row, col, p.text)
-            col += 1
-            for num in rex.findall(p.text):
-                sh.write(row, col, num)
-                col += 1
+            if rex1.search(p.text):
+                row += 1
+                sh.write(row-1, col, p.text)
+
+
+                for num in rex1.findall(p.text):
+                    col += 1
+                    sh.write(row-1, col, num)
+
+                if rex2.search(p.text):
+                    for num in rex2.findall(p.text):
+                        col += 1
+                        sh.write(row-1, col, num)
+
+    else:
+        if padrão == 'R$':
+            rex = re.compile('R\$\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
+
+        if padrão == '%':
+            rex = re.compile('\d+?\.?\d?\d?\%')
+
+        for p in doc.paragraphs:
+            col = 0
+            if rex.search(p.text):
+                row += 1
+                sh.write(row-1, col, p.text)
+
+                for num in rex.findall(p.text):
+                    col += 1
+                    sh.write(row-1, col, num)
+
 
     excel.close()
 
@@ -78,14 +123,14 @@ def show_requestnumber(imagem):
         _, bin = cv2.threshold(mask, 0, 255, cv2.THRESH_BINARY)
         cont, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        cv2.drawContours(img, cont, -1, (0, 255, 0), 1)
+        cv2.drawContours(img, cont, -1, (0, 255, 0), 3)
         for c in cont:
             (x, y, w, z) = cv2.boundingRect(c)
             roi = img[y:y + z, x:x + w]
             cv2.imwrite('circ' + str(len(c))+ '.jpg', roi)
 
 
-        cv2.imshow('Corner', img)
+        cv2.imshow('Corner',  cv2.resize(img, (800, 800)))
         cv2.waitKey()
     except TypeError:
         print("Não tem request nessa folha")
@@ -134,7 +179,6 @@ def pdftojpgconvert(inputPath, filename, outputPath):
     # 20 folhas: 28 segundos	             28,00 	             0,47 	                     1,40
     # 79 folhas: 156.67 segundos            156,67 	             2,61 	                     1,98
 
-
 def get_requesttoexcel(inputpath, filename, outputpath):
     rex1 = re.compile('R\$?S?\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
     rex2 = re.compile('R\$?S?\s?\d+?\,?\d?\d?\d?\.?\d?\d?\n')
@@ -178,4 +222,15 @@ def get_requesttoexcel(inputpath, filename, outputpath):
     # 20 folhas: 76.4620  segundos	         76,46 	             1,27 	                     3,82
     # 78 folhas: 333.7779 segundos	        333,78          	 5,56 	                     4,23
 
+
+
+
+#DEMOO
+
+#doc_to_excel(docpath, 'demo teste')
+#show_requestnumber(imagedemo)
+
+#for t in get_requestnumbers_fromimg(imagedemo):
+ #   print(f'Texto capturado: {t}')
+  #  print('\n')
 

@@ -36,7 +36,6 @@ def trainprepare(path):
     docnum = []
     clausula = []
     text = []
-    # -QUINTA —
     rex = re.compile(r"CLÁUSULA")
     for d in fnmatch.filter(os.listdir(), '*.docx'):
         doc = docx.Document(d)
@@ -82,9 +81,8 @@ def trainprepareDF(dataf):
     dff = pd.DataFrame(data=data)
     return dff
 
-df = trainprepare(docspath)
 
-df.to_excel(docspath + '\\traintest contract.xlsx')
+trainprepare(docspath).to_excel('test contracts.xlsx')
 
 
 

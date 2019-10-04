@@ -7,10 +7,14 @@ import numpy as np
 import pytesseract
 from wand.image import Image as wi
 import os
-docpath = r"C:\Users\caio.santos\Desktop\Lessa CircleUp\OM\(31956244)_(9)_Project Orobo - Offering Memorandum (Sent to WGL - September 24, 2019).DOCX"
-imagedemo = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\ima15.jpg"
-reqpath = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort"
+import time
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caio.santos\AppData\Local\Tesseract-OCR\tesseract.exe"
+
+
+pdf4 = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\teste 4 folhas.pdf"
+pdf20 = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\teste 20 folhas.pdf"
+pdf78 = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\EY_Circle-Up_-_Preliminary_OM.PDF"
+expath = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort"
 
 
 def extnum_from_DF(df):
@@ -110,6 +114,7 @@ def table_to_excel(filepath, excelname, tableindex):
 
     excel.close()
 
+
 def show_requestnumber(imagem):
     try:
         img = cv2.imread(imagem)
@@ -127,17 +132,20 @@ def show_requestnumber(imagem):
         for c in cont:
             (x, y, w, z) = cv2.boundingRect(c)
             roi = img[y:y + z, x:x + w]
-            cv2.imwrite('circ' + str(len(c))+ '.jpg', roi)
 
+        return img
 
-        cv2.imshow('Corner',  cv2.resize(img, (800, 800)))
-        cv2.waitKey()
     except TypeError:
         print("Não tem request nessa folha")
 
-def get_requestnumbers_fromimg(imagem):
+
+def get_requestnumbers_fromimg(imagem, isfile=True):
     try:
-        img = cv2.imread(imagem)
+        if isfile == True:
+            img = cv2.imread(imagem)
+        else:
+            img = imagem
+
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         lower_range = np.array([0, 200, 200])
         upper_range = np.array([0, 255, 255])
@@ -150,7 +158,6 @@ def get_requestnumbers_fromimg(imagem):
         text = []
 
         for c in cont:
-
             (x, y, w, z) = cv2.boundingRect(c)
             roi = img[y:y + z, x:x + w]
             text.append(pytesseract.image_to_string(roi))
@@ -179,58 +186,70 @@ def pdftojpgconvert(inputPath, filename, outputPath):
     # 20 folhas: 28 segundos	             28,00 	             0,47 	                     1,40
     # 79 folhas: 156.67 segundos            156,67 	             2,61 	                     1,98
 
-def get_requesttoexcel(inputpath, filename, outputpath):
+
+def get_requesttoexcel(filepath, excelpath='', excelname='new workbook', pat=True):
     rex1 = re.compile('R\$?S?\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
     rex2 = re.compile('R\$?S?\s?\d+?\,?\d?\d?\d?\.?\d?\d?\n')
     rex3 = re.compile('\d+?\.?\d?\d?\%')
 
-    pdftojpgconvert(inputpath, filename, outputpath)
+    pdf = wi(filename=filepath, resolution=300)
+    pdfimg = pdf.convert('jpeg')
+    pages = []
+    imgblobs = []
 
-    pages = fnmatch.filter(os.listdir(), '*.jpg')
+    for img in pdfimg.sequence:
+        page=wi(image=img)
+        imgblobs.append(page.make_blob('jpeg'))
 
-    excel = xlsxwriter.Workbook('new workbook.xlsx')
+    for im in imgblobs:
+        npimg = np.asarray(bytearray(im), dtype=np.uint8)
+        p = cv2.imdecode(npimg, cv2.IMREAD_UNCHANGED)
+        pages.append(p)
+
+    excel = xlsxwriter.Workbook(f'{excelpath}\\{excelname}.xlsx')
     sh = excel.add_worksheet('new sheet')
 
     r = 0
-
     for p in pages:
         c = 0
         r += 1
-        page = pytesseract.image_to_string(cv2.imread(p)[3050:3500, 1000:1500])
-        sh.write(r, c,'n° Pagina OM: ' + page)
+        page = pytesseract.image_to_string(p[3050:3500, 1000:1500])
+        sh.write(r, c, f'n° Pagina OM: {page}')
 
-        t = get_requestnumbers_fromimg(p)
+        t = get_requestnumbers_fromimg(p, isfile=False)
 
-        for p2 in t:
-            if rex1.search(p2):
-                for num in rex1.findall(p2):
-                    c +=1
-                    sh.write(r, c, num)
+        if pat == False:
+            for p in t:
+                c += 1
+                sh.write(r, c, p)
+        else:
+            for p2 in t:
+                if rex1.search(p2):
+                    for num in rex1.findall(p2):
+                        c += 1
+                        sh.write(r, c, num)
 
-            if rex2.search(p2):
-                for num in rex2.findall(p2):
-                    c += 1
-                    sh.write(r, c, num)
+                if rex2.search(p2):
+                    for num in rex2.findall(p2):
+                        c += 1
+                        sh.write(r, c, num)
 
-            if rex3.search(p2):
-                for num in rex3.findall(p2):
-                    c += 1
-                    sh.write(r, c, num)
+                if rex3.search(p2):
+                    for num in rex3.findall(p2):
+                        c += 1
+                        sh.write(r, c, num)
 
     excel.close()
-    # 4 folhas: 15.2667   segundos	         15,27 	             0,25                   	 3,82
-    # 20 folhas: 76.4620  segundos	         76,46 	             1,27 	                     3,82
-    # 78 folhas: 333.7779 segundos	        333,78          	 5,56 	                     4,23
+    #benchmaking com o filtro ativado:
+    # For 4 pages: 16 seconds or 0.3 minutes - 4s/page
+    # For 20 pages: 75 seconds or 1.2 minutes - 4s/page
+    # For 78 pages: 365 seconds or 6.1 minutes - 5s/page
+
+    # benchmaking sem o filtro ativado:
+    # For 4 pages: 17 seconds or 0.3 minutes - 4s/page
+    # For 20 pages: 73 seconds or 1.2 minutes - 4s/page
+    # For 78 pages: 343 seconds or 5.7 minutes - 4s/page
 
 
-
-
-#DEMOO
-
-#doc_to_excel(docpath, 'demo teste')
-#show_requestnumber(imagedemo)
-
-#for t in get_requestnumbers_fromimg(imagedemo):
- #   print(f'Texto capturado: {t}')
-  #  print('\n')
+    #benchmaking sem o filtro ativado
 

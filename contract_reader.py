@@ -233,7 +233,7 @@ def contract_reader(data):
     df['Info'] = df[['Text', 'Cl class']].apply(get_patter, axis=1)
     return df
 
-os.chdir(r'C:\Users\caio.santos\Desktop\Allpark')
+os.chdir()
 n=46
 
 for f in fnmatch.filter(os.listdir(), '*.pdf')[n:]:

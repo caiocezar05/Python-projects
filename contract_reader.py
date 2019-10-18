@@ -12,9 +12,6 @@ from sklearn.externals import joblib
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caio.santos\AppData\Local\Tesseract-OCR\tesseract.exe"
 
-pdfpath = r"C:\Users\caio.santos\Desktop\test constr"
-docspath = r"C:\Users\caio.santos\Desktop\teste\docs"
-
 
 def get_files_fromdirectory(in_files, out_files):
     for root, dirs, files in os.walk(in_files):  # replace the . with your starting directory

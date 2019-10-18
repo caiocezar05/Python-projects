@@ -11,12 +11,6 @@ import time
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caio.santos\AppData\Local\Tesseract-OCR\tesseract.exe"
 
 
-pdf4 = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\teste 4 folhas.pdf"
-pdf20 = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\teste 20 folhas.pdf"
-pdf78 = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort\EY_Circle-Up_-_Preliminary_OM.PDF"
-expath = r"C:\Users\caio.santos\Documents\OFFERING\CEMIG\no confort"
-
-
 def extnum_from_DF(df):
     rex1 = re.compile('R\$\s?\d+?\,?\d?\d?\d?\.?\d?\d?\sm?b?illion')
     rex2 = re.compile('\d+?\.?\d?\d?\%')

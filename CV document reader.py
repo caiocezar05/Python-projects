@@ -32,6 +32,9 @@ def extnum_from_DF(df):
 
 
 def doc_to_excel(filepath, excelname,padrão=None):
+    """Funciona como um DocScrapping, procura padrões em todos os parágrafos de um arquivo docx e parra para uma planilha de excel.
+    
+    """
     doc = docx.Document(filepath)
     excel = xlsxwriter.Workbook(excelname + '.xlsx')
     sh = excel.add_worksheet()

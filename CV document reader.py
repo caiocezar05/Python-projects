@@ -1,11 +1,11 @@
-import docx
-import re
-import xlsxwriter
-import cv2
+import docx                                     #https://python-docx.readthedocs.io/en/latest/
+import re 
+import xlsxwriter                               #https://xlsxwriter.readthedocs.io/index.html
+import cv2                                      #https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_tutorials.html
 import fnmatch
 import numpy as np
-import pytesseract
-from wand.image import Image as wi
+import pytesseract                              #https://pypi.org/project/pytesseract/
+from wand.image import Image as wi              #http://docs.wand-py.org/en/0.5.7/
 import os
 import time
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\caio.santos\AppData\Local\Tesseract-OCR\tesseract.exe"
